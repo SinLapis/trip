@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <title>Map</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'map/css/style.css' %}">
+</head>
+<body>
+{# 地图 #}
+<div id="mapContainer"></div>
+{# 搜索框 #}
+<div class="panel panel-default" id="searchBox">
+    <div class="panel-body">
+        <div class="form-inline">
+            <button class="btn btn-default" id="menuBtn" style="outline:none">
+                <img src="{% static 'map/images/menu.png' %}">
+            </button>
+            <label for="search" class="sr-only"></label>
+            <input type="text" class="form-control" id="search" placeholder="请输入关键词">
+            <button class="btn btn-default" id="searchBtn" style="outline:none">
+                <img src="{% static 'map/images/search.png' %}">
+            </button>
+        </div>
+    </div>
+</div>
+{# 右下按钮 #}
+{# 去除bootstrap点击按钮的蓝框 #}
+<button type="button" class="btn btn-success" id="genRoute" style="outline: none">
+    <img src="{% static 'map/images/distance.png' %}">
+</button>
+{# 信息面板 #}
+<div class="panel panel-default" id="infoBox">
+    <div class="panel-body" style="padding-right: 0;padding-top: 2px;padding-left: 0;">
+        <div id="waiting">
+            <img src="{% static 'map/images/ring-alt.gif' %}">
+            请稍后...
+        </div>
+        <button type="button" id="infoDismiss" style="outline:none">
+            <img src="{% static 'map/images/close.png' %}">
+        </button>
+        <ul class="list-group" id="result">
+            <li class="list-group-item">时间：<span id="rtime"></span></li>
+            <li class="list-group-item">花费：<span id="rcost"></span></li>
+        </ul>
+    </div>
+</div>
+{# 蒙版 #}
+<div id="mask"></div>
+{# 菜单 #}
+<div id="menu" class="panel panel-default">
+    <div class="panel panel-default">
+        <div class="panel-heading">主题</div>
+        <div class="list-group">
+            <a href="#" class="list-group-item">吃喝</a>
+            <a href="#" class="list-group-item">玩乐</a>
+            <a href="#" class="list-group-item">山</a>
+            <a href="#" class="list-group-item">海</a>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">热门路线</div>
+        <div class="list-group">
+            <a href="#" class="list-group-item">A</a>
+            <a href="#" class="list-group-item">B</a>
+            <a href="#" class="list-group-item">C</a>
+            <a href="#" class="list-group-item">D</a>
+        </div>
+    </div>
+</div>
+<script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script src="http://api.map.baidu.com/api?v=2.0&ak=dR2A1KVkutoP7AXxorBKVe81R9Dpepwm" type="text/javascript"></script>
+<script src="{% static 'map/js/map.js' %}"></script>
+<script src="{% static 'map/js/ui.js' %}"></script>
+<script type="text/javascript">
+    //生成路线按钮
+    $("#genRoute").on("click", function () {
+        $("#genRoute").addClass("disabled");
+        var $infoBox = $("#infoBox"),
+            $waiting = $("#waiting"),
+            $result = $("#result");
+        //调出信息面板-等待
+        $infoBox.css("display", "block");
+        $infoBox.css("height", "60px");
+        $waiting.css("display", "inline-block");
+        //向后端发送ajax请求
+        var pack = [];
+        for (var i = 0; i < 10; i++) {
+            if (markerArray[i]) {
+                var point = {
+                    "lng": markerArray[i].getPosition().lng,
+                    "lat": markerArray[i].getPosition().lat
+                };
+                pack.push(point);
+            }
+        }
+        $.getJSON("{% url 'generate' %}", {
+            "array": pack
+        }, function (json) {
+            //处理后端回应
+            $infoBox.css("height", "150px");
+            $infoBox.one("transitionend", function () {
+                $waiting.css("display", "none");
+                $result.css("display", "block");
+                $("#rtime").html(json.rtime);
+                $("#rcost").html(json.rcost);
+            })
+        });
+    });
+</script>
+</body>
+</html>

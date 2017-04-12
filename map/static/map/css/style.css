@@ -1,0 +1,137 @@
+html {
+    height: 100%
+}
+
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+/*搜索部分*/
+#searchBox {
+    width: 290px;
+    height: auto;
+    top: 25px;
+    left: 25px;
+    position: absolute;
+    box-shadow: 2px 2px 2px #999;
+}
+
+#searchBox .panel-body {
+    padding: 5px;
+}
+
+#menuBtn {
+    width: 34px;
+    height: 34px;
+    padding: 6px;
+}
+
+#searchBtn {
+    width: 34px;
+    height: 34px;
+    padding: 6px;
+}
+
+#searchBox button img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+/*菜单部分*/
+#menu {
+    height: 100%;
+    width: 350px;
+    position: absolute;
+    top: 0;
+    left: -350px;
+    transition: all 0.5s ease 0.1s;
+    z-index: 3;
+}
+
+#menu .panel {
+    margin: 0;
+    border-radius: 0;
+}
+/*蒙版*/
+#mask {
+    background-color: rgba(0, 0, 0, 0);
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: -1;
+    transition: all 0.5s ease 0.1s;
+}
+/*生成按钮*/
+#genRoute {
+    position: absolute;
+    right: 60px;
+    bottom: 60px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    box-shadow: 2px 2px 2px #999;
+}
+#genRoute img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+/*地图*/
+#mapContainer {
+    height: 100%;
+}
+/*信息面板*/
+#infoBox {
+    position: absolute;
+    height: 0;
+    bottom: 0;
+    width: 60%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    box-shadow: 2px 0 2px #999;
+    transition: height 0.5s ease 0.5s;
+    display: none;
+}
+#waiting {
+    display: none;
+    text-align: center;
+    height: 40px;
+    margin-top: 10px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#waiting img{
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+#infoDismiss {
+    right: 0;
+    width: 25px;
+    height: 25px;
+    background-color: #ffffff;
+    border: none;
+    float: right;
+    opacity: 0.5;
+}
+#infoDismiss:hover {
+    opacity: 1;
+}
+#infoDismiss img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+#result {
+    display: none;
+    margin-top: 30px;
+}
