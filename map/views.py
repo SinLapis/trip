@@ -30,5 +30,6 @@ def generate_route(request):
     json = {
         'rtime': '3:00',
         'rcost': '$50',
+        'route': points,
     }
     return JsonResponse(json)

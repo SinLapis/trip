@@ -100,13 +100,21 @@
             "array": pack
         }, function (json) {
             //处理后端回应
+            //信息框展示
             $infoBox.css("height", "150px");
             $infoBox.one("transitionend", function () {
                 $waiting.css("display", "none");
                 $result.css("display", "block");
                 $("#rtime").html(json.rtime);
                 $("#rcost").html(json.rcost);
-            })
+            });
+            //绘制折线
+            var points = [];
+            for(var i = 0; i < json.route.length; i++) {
+                points.push(new BMap.Point(json.route[i].lng, json.route[i].lat));
+            }
+            var polyline = new BMap.Polyline(points);
+            map.addOverlay(polyline);
         });
     });
 </script>

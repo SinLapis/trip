@@ -22,6 +22,7 @@ $("#searchBtn").on("click", function () {
 
 //信息面板
 $("#infoDismiss").on("click", function () {
+    clearMap();
     var $infoBox = $("#infoBox");
     $infoBox.css("height", "0");
     $infoBox.one("transitionend", function () {
