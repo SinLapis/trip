@@ -25,7 +25,6 @@ map.addEventListener("click", function (event) {
             markerArray[count] = new BMap.Marker(
                 new BMap.Point(event.point.lng + fixLng, event.point.lat + fixLat)
             );
-
         } else {
             markerArray[count] = new BMap.Marker(event.point);
         }
