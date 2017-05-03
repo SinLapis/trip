@@ -6,7 +6,7 @@ var map = new BMap.Map("mapContainer", {
 //初始点初始化为用户所在地
 var myCity = new BMap.LocalCity();
 myCity.get(function (r) {
-    map.centerAndZoom(r.name);
+    map.centerAndZoom(r.name, 14);
 });
 map.enableScrollWheelZoom();
 
@@ -18,6 +18,7 @@ var fix = 0;
 map.addEventListener("click", function (event) {
     //保留点击位置
     if (flag) {
+        //win10 150%缩放手动修正
         if (fix) {
             //lng-0.001120 lat0.000975 zoom19
             var fixLng = -0.001120 * Math.pow(2, 19 - map.getZoom()),
@@ -59,3 +60,4 @@ function clearMap() {
     flag = 1;
     fix = 1;
 }
+

@@ -1,3 +1,22 @@
-from django.db import models
+from django.contrib.gis.db import models
 
-# Create your models here.
+
+class Attraction(models.Model):
+    point = models.PointField()
+    name = models.CharField(max_length=50)
+    introduction = models.TextField()
+    rank = models.IntegerField(default=101)
+
+
+class Tag(models.Model):
+    tag_name = models.CharField(max_length=50)
+
+
+class Tag_Map(models.Model):
+    attraction_id = models.ForeignKey(Attraction)
+    tag_id = models.ForeignKey(Tag)
+
+
+class Picture(models.Model):
+    pic_path = models.CharField(max_length=100)
+    attraction_id = models.ForeignKey(Attraction)
