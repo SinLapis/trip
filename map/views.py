@@ -1,10 +1,14 @@
+import heapq
 import random
+
+import math
+from operator import itemgetter
 
 from django.contrib.gis.geos import LinearRing
 from django.shortcuts import render
 from django.http import JsonResponse
 
-from map.models import Attraction, Picture
+from map.models import Attraction, Picture, Tag, Tag_Map, Route, Route_Map
 
 ARRAY = 'array['
 LNG = '][lng]'
@@ -30,8 +34,11 @@ def generate_route(request):
             i += 1
         else:
             break
-    for point in points:
-        print(point)
+    # for point in points:
+    #     print(point)
+    distance2 = ((float(points[0]['lng']) - float(points[1]['lng'])) ** 2 +
+                (float(points[0]['lat']) - float(points[1]['lat'])) ** 2)
+    print(math.sqrt(distance2))
     json = {
         'rtime': '3:00',
         'rcost': '$50',
@@ -51,7 +58,16 @@ def show_attractions(request):
         srid=4326
     )
     json_content = []
-    results = Attraction.objects.filter(point__contained=ls)
+    if content['tag'] == 'all':
+        results = Attraction.objects.filter(point__contained=ls)
+    else:
+        tag = Tag.objects.filter(tag_name=content['tag'])[0]
+        pre_results = Attraction.objects.filter(point__contained=ls)
+        results = []
+        for pre_result in pre_results:
+            if tag.id == Tag_Map.objects.filter(attraction_id=pre_result.id)[0].tag_id.id:
+                results.append(pre_result)
+        print(results)
     for result in results:
         image = Picture.objects.filter(attraction_id=result.id)[0].pic_path
         attraction = {
@@ -82,5 +98,51 @@ def show_detail(request):
     json = {
         'introduction': attraction.introduction,
         'images': images,
+    }
+    return JsonResponse(json)
+
+def show_tags(request):
+    tags = Tag.objects.all()
+    counts = []
+    for tag in tags:
+        count = len(Tag_Map.objects.filter(tag_id=tag.id))
+        counts.append(count)
+    top_5_index = heapq.nlargest(5, range(len(counts)), counts.__getitem__)
+    content = []
+    for index in top_5_index:
+        content.append(tags[index].tag_name)
+    json = {
+        'tag': content,
+    }
+    return JsonResponse(json)
+
+
+def show_route(request):
+    routes = Route.objects.all()
+    content = []
+    for route in routes:
+        content.append(route.route_name)
+    json = {
+        'route': content
+    }
+    return JsonResponse(json)
+
+
+def route_detail(request):
+    route_name = request.GET['name']
+    route = Route.objects.filter(route_name=route_name)[0]
+    route_query = Route_Map.objects.filter(route_id=route.id)
+    content = []
+    for rq in route_query:
+        attraction = Attraction.objects.filter(id=rq.attraction_id.id)[0]
+        attraction_poiint = {
+            'lat': attraction.point.x,
+            'lng': attraction.point.y,
+            'num': rq.attraction_num,
+        }
+        content.append(attraction_poiint)
+    sorted(content, key=itemgetter('num'))
+    json = {
+        'detail': content
     }
     return JsonResponse(json)

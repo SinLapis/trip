@@ -4,42 +4,41 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <title>Map</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'map/css/style.css' %}">
+    <link rel="stylesheet" href="static/map/css/style.css">
 </head>
 <body>
-{# 地图 #}
+<!-- 地图 -->
 <div id="mapContainer"></div>
-{# 搜索框 #}
+<!-- 搜索框 -->
 <div class="panel panel-default" id="searchBox">
     <div class="panel-body">
         <div class="form-inline">
             <button class="btn btn-default" id="menuBtn" style="outline:none">
-                <img src="{% static 'map/images/menu.png' %}">
+                <img src="static/map/images/menu.png">
             </button>
             <label for="search" class="sr-only"></label>
             <input type="text" class="form-control" id="search" placeholder="请输入关键词">
             <button class="btn btn-default" id="searchBtn" style="outline:none">
-                <img src="{% static 'map/images/search.png' %}">
+                <img src="static/map/images/search.png">
             </button>
         </div>
     </div>
 </div>
-{# 右下按钮 #}
-{# 去除bootstrap点击按钮的蓝框 #}
+<!-- 右下按钮 -->
+<!-- 去除bootstrap点击按钮的蓝框 -->
 <button type="button" class="btn btn-success" id="genRoute" style="outline: none">
-    <img src="{% static 'map/images/distance.png' %}">
+    <img src="static/map/images/distance.png">
 </button>
-{# 信息面板 #}
+<!-- 信息面板 -->
 <div class="panel panel-default" id="infoBox">
     <div class="panel-body" style="padding-right: 0;padding-top: 2px;padding-left: 0;">
         <div id="waiting">
-            <img src="{% static 'map/images/ring-alt.gif' %}">
+            <img src="static/map/images/ring-alt.gif">
             请稍后...
         </div>
         <button type="button" id="infoDismiss" class="dismiss"
                 style="outline:none">
-            <img src="{% static 'map/images/close.png' %}">
+            <img src="static/map/images/close.png">
         </button>
         <ul class="list-group" id="result">
             <li class="list-group-item">时间：<span id="rtime"></span></li>
@@ -47,14 +46,14 @@
         </ul>
     </div>
 </div>
-{# 蒙版 #}
+<!-- 蒙版 -->
 <div id="mask"></div>
-{# 景点面板 #}
+<!-- 景点面板 -->
 <div id="detailPanel" class="container panel panel-default">
     <div class="row">
         <button type="button" id="detailDismiss" class="dismiss"
                 style="outline:none">
-            <img src="{% static 'map/images/close.png' %}">
+            <img src="static/map/images/close.png">
         </button>
     </div>
     <div class="row panel-body">
@@ -80,230 +79,24 @@
         </div>
     </div>
 </div>
-{# 菜单 #}
+<!-- 菜单 -->
 <div id="menu" class="panel panel-default">
     <div class="panel panel-default">
         <div class="panel-heading">主题</div>
-        <div class="list-group">
-            <a href="#" class="list-group-item">吃喝</a>
-            <a href="#" class="list-group-item">玩乐</a>
-            <a href="#" class="list-group-item">山</a>
-            <a href="#" class="list-group-item">海</a>
-        </div>
+        <ul class="list-group" id="themePanel">
+            <li class="list-group-item">全部</li>
+        </ul>
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">热门路线</div>
-        <div class="list-group">
-            <a href="#" class="list-group-item">A</a>
-            <a href="#" class="list-group-item">B</a>
-            <a href="#" class="list-group-item">C</a>
-            <a href="#" class="list-group-item">D</a>
-        </div>
+        <ul class="list-group" id="routePanel">
+        </ul>
     </div>
 </div>
 <script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <script src="http://api.map.baidu.com/api?v=2.0&ak=dR2A1KVkutoP7AXxorBKVe81R9Dpepwm" type="text/javascript"></script>
-<script src="{% static 'map/js/map.js' %}"></script>
-<script src="{% static 'map/js/ui.js' %}"></script>
-<script type="text/javascript">
-    //生成路线按钮
-    $("#genRoute").on("click", function () {
-        $("#genRoute").addClass("disabled");
-        var $infoBox = $("#infoBox"),
-            $waiting = $("#waiting"),
-            $result = $("#result");
-        //调出信息面板-等待
-        $infoBox.css("display", "block");
-        $infoBox.css("height", "60px");
-        $waiting.css("display", "inline-block");
-        //向后端发送ajax请求
-        var pack = [];
-        for (var i = 0; i < 10; i++) {
-            if (markerArray[i]) {
-                var point = {
-                    "lng": markerArray[i].getPosition().lng,
-                    "lat": markerArray[i].getPosition().lat
-                };
-                pack.push(point);
-            }
-        }
-        $.getJSON("{% url 'generate' %}", {
-            "array": pack
-        }, function (json) {
-            //处理后端回应
-            //信息框展示
-            $infoBox.css("height", "150px");
-            $infoBox.one("transitionend", function () {
-                $waiting.css("display", "none");
-                $result.css("display", "block");
-                $("#rtime").html(json.rtime);
-                $("#rcost").html(json.rcost);
-            });
-            //绘制折线
-            var points = [];
-            for (var i = 0; i < json.route.length; i++) {
-                points.push(new BMap.Point(json.route[i].lng, json.route[i].lat));
-            }
-            var polyline = new BMap.Polyline(points);
-            map.addOverlay(polyline);
-        });
-    });
-
-    //自定义覆盖物
-    function AttractionOverlay(point, name, imgURL) {
-        this._point = point;
-        this._name = name;
-        this._imgURL = imgURL;
-    }
-    AttractionOverlay.prototype = new BMap.Overlay();
-    AttractionOverlay.prototype.initialize = function (map) {
-        this._map = map;
-        var div = this._div = document.createElement("div");
-        div.style.position = "absolute";
-        div.style.zIndex = BMap.Overlay.getZIndex(this._point.lat);
-        div.style.backgroundColor = "#6BADCA";
-        div.style.border = "1px solid #5188A5";
-        div.style.color = "white";
-        div.style.height = "60px";
-        div.style.width = "80px";
-        div.style.padding = "2px";
-        div.style.lineHeight = "18px";
-        div.style.whiteSpace = "nowrap";
-        div.style.MozUserSelect = "none";
-        div.style.fontSize = "12px";
-        //div.style.display = "table-cell";
-        div.style.textAlign = "center";
-        //div.style.verticalAlign = "middle";
-        var that = this;
-        //弹出景点面板
-        div.addEventListener("click", function (e) {
-            $("#detailPanel").css("display", "block");
-            $.getJSON("{% url 'detail' %}", {
-                'name': that._name
-            }, function (json) {
-                $("#detailTitle").text(that._name);
-                $("#introduction").text(json.introduction);
-                //图片轮播设置
-                var $detailImage = $("#detailImage");
-                $detailImage.addClass("slide");
-                for (var i = 0; i < json.images.length; i++) {
-                    $detailImage.children("ol").append('<li data-target="carousel-generic"></li>');
-                    $detailImage.find("li:last").attr("data-slide-to", i);
-                    $detailImage.children("div").append('<div class="item">' +
-                        '<a href="javascript:void(0);"><img src="" class="detail-img">' +
-                        '</a></div>');
-                    $detailImage.find("img:last").attr("src", json.images[i]);
-                }
-                $detailImage.children("ol").children("li:first").addClass("active");
-                $detailImage.children("div").children("div:first").addClass("active");
-            });
-            var $mask = $("#mask");
-            $mask.css("z-index", "2");
-            $mask.css("background-color", "rgba(0, 0, 0, 0.5)");
-            e.stopPropagation();
-        });
-
-        //图片
-        var img = this._img = document.createElement("img");
-        img.style.width = "auto";
-        img.style.height = "auto";
-        img.style.maxHeight = "100%";
-        img.style.maxWidth = "100%";
-        //img.style.verticalAlign = "middle";
-        img.setAttribute("src", this._imgURL);
-        div.appendChild(img);
-        //框内文字
-        //var span = this._span = document.createElement("span");
-        //div.appendChild(span);
-        //span.appendChild(document.createTextNode(this._text));
-        //var that = this;
-        //箭头
-        var arrow = this._arrow = document.createElement("div");
-        arrow.style.background = "url({% static 'map/images/label.png' %}) no-repeat";
-        arrow.style.position = "absolute";
-        arrow.style.width = "11px";
-        arrow.style.height = "10px";
-        arrow.style.top = "59px";
-        arrow.style.left = "10px";
-        arrow.style.overflow = "hidden";
-        arrow.style.backgroundPosition = "0px -20px";
-        div.appendChild(arrow);
-        div.onmouseout = function () {
-            this.style.backgroundColor = "#6BADCA";
-            this.style.borderColor = "#5188A5";
-            //this.getElementsByTagName("span")[0].innerHTML = that._overText;
-            arrow.style.backgroundPosition = "0px -20px";
-            this.style.zIndex *= 2.0;
-        };
-
-        div.onmouseover = function () {
-            this.style.backgroundColor = "#EE5D5B";
-            this.style.borderColor = "#BD3D3A";
-            //this.getElementsByTagName("span")[0].innerHTML = that._text;
-            arrow.style.backgroundPosition = "0px 0px";
-            this.style.zIndex /= 2.0;
-        };
-
-        map.getPanes().labelPane.appendChild(div);
-
-        return div;
-    };
-    AttractionOverlay.prototype.draw = function () {
-        var map = this._map;
-        var pixel = map.pointToOverlayPixel(this._point);
-        this._div.style.left = pixel.x - parseInt(this._arrow.style.left) + "px";
-        this._div.style.top = pixel.y - 69 + "px";
-    };
-
-    attractionOverlayArray = [];
-    //实时更新标记景点
-    function clearAttractionOverlay() {
-        for (var i = 0; i < attractionOverlayArray.length; i++) {
-            map.removeOverlay(attractionOverlayArray[i]);
-        }
-        attractionOverlayArray = [];
-    }
-
-    function getCurrentAttractions() {
-        var bs = map.getBounds(),
-            bsSouthWest = bs.getSouthWest(),
-            bsNorthEast = bs.getNorthEast(),
-            zoomLevel = map.getZoom();
-        $.getJSON("{% url 'show' %}", {
-            "south-lng": bsSouthWest.lng,
-            "west-lat": bsSouthWest.lat,
-            "north-lng": bsNorthEast.lng,
-            "east-lat": bsNorthEast.lat,
-            "zoom": zoomLevel
-        }, function (json) {
-            clearAttractionOverlay();
-            for (var i = 0; i < json.content.length; i++) {
-                if (json.content[i].lng && json.content[i].lat) {
-                    attractionOverlay = new AttractionOverlay(
-                        new BMap.Point(json.content[i].lng, json.content[i].lat),
-                        json.content[i].name, json.content[i].img
-                    );
-                    attractionOverlayArray.push(attractionOverlay);
-                    map.addOverlay(attractionOverlay);
-                }
-            }
-        });
-    }
-    map.addEventListener("zoomend", getCurrentAttractions);
-    map.addEventListener("dragend", getCurrentAttractions);
-    //信息面板
-    $("#infoDismiss").on("click", function () {
-        clearMap();
-        getCurrentAttractions();
-        var $infoBox = $("#infoBox");
-        $infoBox.css("height", "0");
-        $infoBox.one("transitionend", function () {
-            $("#result").css("display", "none");
-            $infoBox.css("display", "none");
-            $("#genRoute").removeClass("disabled");
-        });
-    });
-</script>
+<script src="static/map/js/map.js"></script>
+<script src="static/map/js/ui.js"></script>
 </body>
 </html>

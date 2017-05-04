@@ -20,3 +20,13 @@ class Tag_Map(models.Model):
 class Picture(models.Model):
     pic_path = models.CharField(max_length=100)
     attraction_id = models.ForeignKey(Attraction)
+
+
+class Route(models.Model):
+    route_name = models.CharField(max_length=40)
+
+
+class Route_Map(models.Model):
+    attraction_num = models.IntegerField(default=0)
+    attraction_id = models.ForeignKey(Attraction)
+    route_id = models.ForeignKey(Route)
