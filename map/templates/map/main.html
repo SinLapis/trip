@@ -58,8 +58,26 @@
         </button>
     </div>
     <div class="row panel-body">
-        <div class="col-md-4"></div>
-        <div class="col-md-8"></div>
+        <div class="col-md-4">
+            <h3 id="detailTitle"></h3>
+            <p id="introduction"></p>
+        </div>
+        <div class="col-md-8">
+            <div id="detailImage" class="carousel">
+                <ol class="carousel-indicators">
+                </ol>
+                <div class="carousel-inner">
+                </div>
+                <a class="left carousel-control" href="#detailImage" role="button" data-slide="prev">
+                    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="right carousel-control" href="#detailImage" role="button" data-slide="next">
+                    <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 {# 菜单 #}
@@ -133,9 +151,9 @@
     });
 
     //自定义覆盖物
-    function AttractionOverlay(point, text, imgURL) {
+    function AttractionOverlay(point, name, imgURL) {
         this._point = point;
-        this._text = text;
+        this._name = name;
         this._imgURL = imgURL;
     }
     AttractionOverlay.prototype = new BMap.Overlay();
@@ -157,9 +175,29 @@
         //div.style.display = "table-cell";
         div.style.textAlign = "center";
         //div.style.verticalAlign = "middle";
+        var that = this;
+        //弹出景点面板
         div.addEventListener("click", function (e) {
             $("#detailPanel").css("display", "block");
-
+            $.getJSON("{% url 'detail' %}", {
+                'name': that._name
+            }, function (json) {
+                $("#detailTitle").text(that._name);
+                $("#introduction").text(json.introduction);
+                //图片轮播设置
+                var $detailImage = $("#detailImage");
+                $detailImage.addClass("slide");
+                for (var i = 0; i < json.images.length; i++) {
+                    $detailImage.children("ol").append('<li data-target="carousel-generic"></li>');
+                    $detailImage.find("li:last").attr("data-slide-to", i);
+                    $detailImage.children("div").append('<div class="item">' +
+                        '<a href="javascript:void(0);"><img src="" class="detail-img">' +
+                        '</a></div>');
+                    $detailImage.find("img:last").attr("src", json.images[i]);
+                }
+                $detailImage.children("ol").children("li:first").addClass("active");
+                $detailImage.children("div").children("div:first").addClass("active");
+            });
             var $mask = $("#mask");
             $mask.css("z-index", "2");
             $mask.css("background-color", "rgba(0, 0, 0, 0.5)");

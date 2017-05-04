@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^full/(?P<path>.*)', serve,
         {'document_root': '/usr/local/project/trip/full'}
         ),
+    url(r'^detail/$', views.show_detail, name='detail'),
 ]

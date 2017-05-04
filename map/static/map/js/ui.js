@@ -15,7 +15,6 @@ $("#menuBtn").on("click", function () {
     });
 });
 
-
 //搜索按钮功能
 $("#searchBtn").on("click", function () {
     searchMap($("#search").val());
@@ -30,4 +29,8 @@ $("#detailDismiss").on("click", function () {
     $mask.one("transitionend", function () {
         $mask.css("z-index", "-1");
     });
+    var $detailImage = $("#detailImage");
+    $detailImage.find("ol").empty();
+    $detailImage.find("div").empty();
+    $detailImage.removeClass("slide");
 });

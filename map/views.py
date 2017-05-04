@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.gis.geos import LinearRing
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -39,7 +41,6 @@ def generate_route(request):
 
 
 def show_attractions(request):
-    print(request.GET)
     content = request.GET
     ls = LinearRing(
         (float(content['west-lat']), float(content['south-lng'])),
@@ -51,7 +52,7 @@ def show_attractions(request):
     )
     json_content = []
     results = Attraction.objects.filter(point__contained=ls)
-    for result in results[:20]:
+    for result in results:
         image = Picture.objects.filter(attraction_id=result.id)[0].pic_path
         attraction = {
             'name': result.name,
@@ -63,5 +64,23 @@ def show_attractions(request):
         json_content.append(attraction)
     json = {
         'content': json_content,
+    }
+    return JsonResponse(json)
+
+
+def show_detail(request):
+    name = request.GET['name']
+    attraction = Attraction.objects.filter(name=name)[0]
+    image_path = Picture.objects.filter(attraction_id=attraction.id)
+    if len(image_path) >= 10:
+        l = random.sample(range(len(image_path)), 10)
+    else:
+        l = range(len(image_path))
+    images = []
+    for i in l:
+        images.append(image_path[i].pic_path)
+    json = {
+        'introduction': attraction.introduction,
+        'images': images,
     }
     return JsonResponse(json)
