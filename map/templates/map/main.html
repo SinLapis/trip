@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.8.0/css/bootstrap-slider.css">
     <title>Map</title>
     <link rel="stylesheet" href="static/map/css/style.css">
 </head>
@@ -82,6 +84,37 @@
 <!-- 菜单 -->
 <div id="menu" class="panel panel-default">
     <div class="panel panel-default">
+        <div class="panel-heading">选项</div>
+        <ul class="list-group" id="config">
+            <li class="list-group-item">
+                <label for="days">天数</label>
+                <input id="days" data-slider-id="daysSlider" type="text"
+                       data-slider-min="1" data-slider-max="7" data-slider-step="1"
+                       data-slider-value="3"/>
+            </li>
+            <li class="list-group-item">
+                <label for="guys">人数</label>
+                <input id="guys" onkeyup="this.value=this.value.replace(/\D/g,'')"/>
+            </li>
+            <li class="list-group-item">
+                <label>类型</label>
+                <form role="form" id="checkboxes">
+                    <div class="form-group">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="naturalOption" value="option1">自然景观
+                        </label>
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="culturalOption" value="option2">人文景观
+                        </label>
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="historicalOption" value="option3">古迹类
+                        </label>
+                    </div>
+                </form>
+            </li>
+        </ul>
+    </div>
+    <div class="panel panel-default">
         <div class="panel-heading">主题</div>
         <ul class="list-group" id="themePanel">
             <li class="list-group-item">全部</li>
@@ -95,7 +128,13 @@
 </div>
 <script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/9.8.0/bootstrap-slider.js"></script>
 <script src="http://api.map.baidu.com/api?v=2.0&ak=dR2A1KVkutoP7AXxorBKVe81R9Dpepwm" type="text/javascript"></script>
+<script type="text/javascript">
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+    });
+</script>
 <script src="static/map/js/map.js"></script>
 <script src="static/map/js/ui.js"></script>
 </body>

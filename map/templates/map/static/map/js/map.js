@@ -3,11 +3,29 @@
 var map = new BMap.Map("mapContainer", {
     enableMapClick: false
 });
+// var driving;
+// map.addEventListener("load", function () {
+//     //路线规划
+//     var options = {
+//         onSearchComplete: function (results) {
+//             // 获取第一条方案
+//             var plan = results.getPlan(0);
+//             // 获取方案的驾车线路
+//             var route = plan.getRoute(0);
+//             var pts = route.getPath();
+//             var polyline = new BMap.Polyline(pts);
+//             map.addOverlay(polyline);
+//             console.log(pts);
+//         }
+//     };
+//     driving = new BMap.DrivingRoute(map, options);
+// });
 //初始点初始化为用户所在地
-var myCity = new BMap.LocalCity();
-myCity.get(function (r) {
-    map.centerAndZoom(r.name, 14);
-});
+// var myCity = new BMap.LocalCity();
+// myCity.get(function (r) {
+//     map.centerAndZoom(r.name, 14);
+// });
+map.centerAndZoom(new BMap.Point(104.072438, 30.662863), 14);
 map.enableScrollWheelZoom();
 
 //标记操作

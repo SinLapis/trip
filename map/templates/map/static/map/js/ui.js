@@ -36,6 +36,12 @@ $("#detailDismiss").on("click", function () {
     $detailImage.find("div").empty();
     $detailImage.removeClass("slide");
 });
+//菜单选项
+$("#days").slider({
+    formatter: function (value) {
+        return value;
+    }
+});
 //全局tag
 var current_tag = "all";
 //菜单tag部分初始化
@@ -62,9 +68,35 @@ $.getJSON("/map/top-tags/", {}, function (json) {
 });
 //路线生成及绘制
 var $infoBox = $("#infoBox"), $waiting = $("#waiting"), $result = $("#result");
+//查找poi回调
+function localSearchCallback(titles) {
+    var drivingOptions = {
+            onSearchComplete: function (results) {
+                var plan = results.getPlan(0);
+                var route = plan.getRoute(0);
+                var pts = route.getPath();
+                var polyline = new BMap.Polyline(pts);
+                map.addOverlay(polyline);
+            }
+        };
+        var driving = new BMap.WalkingRoute(map, drivingOptions);
+        for (i = 1; i < titles.length; i++) {
+            console.log(titles[i - 1] + ' ' + titles[i]);
+            driving.search(titles[i - 1], titles[i]);
+        }
+}
 function drawRoute(pack) {
+    var days = $("#days").attr("data-slider-value");
+    var guys = $("#guys").val();
+    if (!guys)
+        guys = 1;
     $.getJSON("/map/generate/", {
-        "array": pack
+        "days": days,
+        "guys": guys,
+        "natural-type": $("#naturalOption").is(":checked"),
+        "cultural-type": $("#culturalOption").is(":checked"),
+        "historical-type": $("#historicalOption").is(":checked"),
+        "points": pack
     }, function (json) {
         //处理后端回应
         //信息框展示
@@ -80,8 +112,25 @@ function drawRoute(pack) {
         for (var i = 0; i < json.route.length; i++) {
             points.push(new BMap.Point(json.route[i].lng, json.route[i].lat));
         }
-        var polyline = new BMap.Polyline(points);
-        map.addOverlay(polyline);
+        // var polyline = new BMap.Polyline(points);
+        // map.addOverlay(polyline);
+        var titles = [];
+        var searchOption = {
+            onSearchComplete: function (results) {
+                if(results.getPoi(0))
+                    titles.push(results.getPoi(0).title);
+                else{
+                    var index = titles.length;
+                    points.splice(index, 1);
+                }
+                if(titles.length === points.length)
+                    localSearchCallback(titles);
+            }
+        };
+        var localSearch = new BMap.LocalSearch(map, searchOption);
+        for (i = 0; i < points.length; i++) {
+            localSearch.search(json.route[i].name);
+        }
     });
 }
 //菜单路线部分初始化
@@ -102,7 +151,7 @@ $.getJSON("/map/route/", {}, function (json) {
                 "name": $(this).text()
             }, function (json) {
                 var pack = json.detail;
-                for (var i = 0; i < pack.length; i++){
+                for (var i = 0; i < pack.length; i++) {
                     var marker = new BMap.Marker(new BMap.Point(pack[i].lng, pack[i].lat));
                     map.addOverlay(marker);
                 }

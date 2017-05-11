@@ -30,3 +30,12 @@ class Route_Map(models.Model):
     attraction_num = models.IntegerField(default=0)
     attraction_id = models.ForeignKey(Attraction)
     route_id = models.ForeignKey(Route)
+
+
+class Tag_Class(models.Model):
+    class_name = models.CharField(max_length=10)
+    
+    
+class Tag_Class_Map(models.Model):
+    tag_id = models.ForeignKey(Tag)
+    class_id = models.ForeignKey(Tag_Class)

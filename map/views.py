@@ -1,16 +1,15 @@
 import heapq
 import random
-
-import math
 from operator import itemgetter
 
 from django.contrib.gis.geos import LinearRing
 from django.shortcuts import render
 from django.http import JsonResponse
 
-from map.models import Attraction, Picture, Tag, Tag_Map, Route, Route_Map
+from map.models import Attraction, Picture, Tag, Tag_Map, Route, Route_Map, Tag_Class
+from map import algorithm
 
-ARRAY = 'array['
+POINTS = 'points['
 LNG = '][lng]'
 LAT = '][lat]'
 
@@ -20,15 +19,27 @@ def main(request):
 
 
 def generate_route(request):
-
     i = 0
     points = []
     content = request.GET
+    for (key, value) in content.items():
+        print('key: ' + key)
+        print('value: ' + value)
+    days = content['days']
+    guys = content['guys']
+    tag_classes = []
+    if content['natural-type']:
+        tag_classes.append(Tag_Class.objects.filter(class_name='自然景观')[0])
+    if content['cultural-type']:
+        tag_classes.append(Tag_Class.objects.filter(class_name='人文景观')[0])
+    if content['historical-type']:
+        tag_classes.append(Tag_Class.objects.filter(class_name='古迹类')[0])
+
     while True:
-        if (ARRAY + str(i) + LNG) in content:
+        if (POINTS + str(i) + LNG) in content:
             point = {
-                'lng': content[ARRAY + str(i) + LNG],
-                'lat': content[ARRAY + str(i) + LAT]
+                'lng': content[POINTS + str(i) + LNG],
+                'lat': content[POINTS + str(i) + LAT]
             }
             points.append(point)
             i += 1
@@ -36,13 +47,25 @@ def generate_route(request):
             break
     # for point in points:
     #     print(point)
-    distance2 = ((float(points[0]['lng']) - float(points[1]['lng'])) ** 2 +
-                (float(points[0]['lat']) - float(points[1]['lat'])) ** 2)
-    print(math.sqrt(distance2))
+    # distance2 = ((float(points[0]['lng']) - float(points[1]['lng'])) ** 2 +
+    #              (float(points[0]['lat']) - float(points[1]['lat'])) ** 2)
+    # print(math.sqrt(distance2))
+    recommends = algorithm.offset_match(points, tag_classes)
+    recommends_json = []
+    deduplicate = []
+    for recommend in recommends:
+        if recommend['attraction'].name not in deduplicate:
+            recommend_content = {
+                'name': recommend['attraction'].name,
+                'lat': recommend['attraction'].point.x,
+                'lng': recommend['attraction'].point.y,
+            }
+            deduplicate.append(recommend['attraction'].name)
+            recommends_json.append(recommend_content)
     json = {
         'rtime': '3:00',
         'rcost': '$50',
-        'route': points,
+        'route': recommends_json,
     }
     return JsonResponse(json)
 
@@ -100,6 +123,7 @@ def show_detail(request):
         'images': images,
     }
     return JsonResponse(json)
+
 
 def show_tags(request):
     tags = Tag.objects.all()
