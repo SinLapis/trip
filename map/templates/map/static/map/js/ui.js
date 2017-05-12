@@ -69,22 +69,31 @@ $.getJSON("/map/top-tags/", {}, function (json) {
 //路线生成及绘制
 var $infoBox = $("#infoBox"), $waiting = $("#waiting"), $result = $("#result");
 //查找poi回调
-function localSearchCallback(titles) {
+function localSearchCallback(titles, json) {
     var drivingOptions = {
-            onSearchComplete: function (results) {
-                var plan = results.getPlan(0);
-                var route = plan.getRoute(0);
-                var pts = route.getPath();
-                var polyline = new BMap.Polyline(pts);
-                map.addOverlay(polyline);
-            }
-        };
-        var driving = new BMap.WalkingRoute(map, drivingOptions);
-        for (i = 1; i < titles.length; i++) {
-            console.log(titles[i - 1] + ' ' + titles[i]);
-            driving.search(titles[i - 1], titles[i]);
+        onSearchComplete: function (results) {
+            var plan = results.getPlan(0);
+            var route = plan.getRoute(0);
+            var pts = route.getPath();
+            var polyline = new BMap.Polyline(pts);
+            map.addOverlay(polyline);
         }
+    };
+    var driving = new BMap.WalkingRoute(map, drivingOptions);
+    for (i = 1; i < titles.length; i++) {
+        console.log(titles[i - 1] + ' ' + titles[i]);
+        driving.search(titles[i - 1], titles[i]);
+    }
+    $infoBox.css("height", "150px");
+    $infoBox.one("transitionend", function () {
+        $waiting.css("display", "none");
+        $result.css("display", "block");
+        $("#rtime").html(json.rtime);
+        $("#rcost").html(json.rcost);
+    });
 }
+//信息框展示标志
+var infoBoxOn = false;
 function drawRoute(pack) {
     var days = $("#days").attr("data-slider-value");
     var guys = $("#guys").val();
@@ -100,16 +109,20 @@ function drawRoute(pack) {
     }, function (json) {
         //处理后端回应
         //信息框展示
-        $infoBox.css("height", "150px");
-        $infoBox.one("transitionend", function () {
-            $waiting.css("display", "none");
-            $result.css("display", "block");
-            $("#rtime").html(json.rtime);
-            $("#rcost").html(json.rcost);
-        });
-        //绘制折线
+        infoBoxOn = true;
+        clearMap();
+        console.log(json.route);
+        //绘制折线、图标
         var points = [];
-        for (var i = 0; i < json.route.length; i++) {
+        for (i = 0; i < json.route.length; i++) {
+            if (json.route[i].lng && json.route[i].lat) {
+                var attractionOverlay = new AttractionOverlay(
+                    new BMap.Point(json.route[i].lng, json.route[i].lat),
+                    json.route[i].name, json.route[i].img
+                );
+                attractionOverlayArray.push(attractionOverlay);
+                map.addOverlay(attractionOverlay);
+            }
             points.push(new BMap.Point(json.route[i].lng, json.route[i].lat));
         }
         // var polyline = new BMap.Polyline(points);
@@ -117,14 +130,14 @@ function drawRoute(pack) {
         var titles = [];
         var searchOption = {
             onSearchComplete: function (results) {
-                if(results.getPoi(0))
+                if (results.getPoi(0))
                     titles.push(results.getPoi(0).title);
-                else{
+                else {
                     var index = titles.length;
                     points.splice(index, 1);
                 }
-                if(titles.length === points.length)
-                    localSearchCallback(titles);
+                if (titles.length === points.length)
+                    localSearchCallback(titles, json);
             }
         };
         var localSearch = new BMap.LocalSearch(map, searchOption);
@@ -297,37 +310,40 @@ function clearAttractionOverlay() {
 }
 
 function getCurrentAttractions() {
-    var bs = map.getBounds(),
-        bsSouthWest = bs.getSouthWest(),
-        bsNorthEast = bs.getNorthEast(),
-        zoomLevel = map.getZoom();
-    $.getJSON("/map/show/", {
-        "south-lng": bsSouthWest.lng,
-        "west-lat": bsSouthWest.lat,
-        "north-lng": bsNorthEast.lng,
-        "east-lat": bsNorthEast.lat,
-        "zoom": zoomLevel,
-        'tag': current_tag
-    }, function (json) {
-        clearAttractionOverlay();
-        for (var i = 0; i < json.content.length; i++) {
-            if (json.content[i].lng && json.content[i].lat) {
-                var attractionOverlay = new AttractionOverlay(
-                    new BMap.Point(json.content[i].lng, json.content[i].lat),
-                    json.content[i].name, json.content[i].img
-                );
-                attractionOverlayArray.push(attractionOverlay);
-                map.addOverlay(attractionOverlay);
+    if (!infoBoxOn) {
+        var bs = map.getBounds(),
+            bsSouthWest = bs.getSouthWest(),
+            bsNorthEast = bs.getNorthEast(),
+            zoomLevel = map.getZoom();
+        $.getJSON("/map/show/", {
+            "south-lng": bsSouthWest.lng,
+            "west-lat": bsSouthWest.lat,
+            "north-lng": bsNorthEast.lng,
+            "east-lat": bsNorthEast.lat,
+            "zoom": zoomLevel,
+            'tag': current_tag
+        }, function (json) {
+            clearAttractionOverlay();
+            for (var i = 0; i < json.content.length; i++) {
+                if (json.content[i].lng && json.content[i].lat) {
+                    var attractionOverlay = new AttractionOverlay(
+                        new BMap.Point(json.content[i].lng, json.content[i].lat),
+                        json.content[i].name, json.content[i].img
+                    );
+                    attractionOverlayArray.push(attractionOverlay);
+                    map.addOverlay(attractionOverlay);
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 map.addEventListener("zoomend", getCurrentAttractions);
 map.addEventListener("dragend", getCurrentAttractions);
 
-//信息面板
+//信息面板关闭
 $("#infoDismiss").on("click", function () {
+    infoBoxOn = false;
     clearMap();
     getCurrentAttractions();
     var $infoBox = $("#infoBox");

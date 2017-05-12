@@ -25,8 +25,8 @@ def generate_route(request):
     for (key, value) in content.items():
         print('key: ' + key)
         print('value: ' + value)
-    days = content['days']
-    guys = content['guys']
+    days = int(content['days'])
+    guys = int(content['guys'])
     tag_classes = []
     if content['natural-type']:
         tag_classes.append(Tag_Class.objects.filter(class_name='自然景观')[0])
@@ -51,14 +51,19 @@ def generate_route(request):
     #              (float(points[0]['lat']) - float(points[1]['lat'])) ** 2)
     # print(math.sqrt(distance2))
     recommends = algorithm.offset_match(points, tag_classes)
+    if len(recommends) > days * 3:
+        recommends = algorithm.score_delete_recommends(recommends, days)
+    distance_matrix = algorithm.get_distance_matrix(recommends)
     recommends_json = []
     deduplicate = []
     for recommend in recommends:
         if recommend['attraction'].name not in deduplicate:
+            img = Picture.objects.filter(attraction_id=recommend['attraction'].id)[0].pic_path
             recommend_content = {
                 'name': recommend['attraction'].name,
                 'lat': recommend['attraction'].point.x,
                 'lng': recommend['attraction'].point.y,
+                'img': img,
             }
             deduplicate.append(recommend['attraction'].name)
             recommends_json.append(recommend_content)
@@ -90,7 +95,6 @@ def show_attractions(request):
         for pre_result in pre_results:
             if tag.id == Tag_Map.objects.filter(attraction_id=pre_result.id)[0].tag_id.id:
                 results.append(pre_result)
-        print(results)
     for result in results:
         image = Picture.objects.filter(attraction_id=result.id)[0].pic_path
         attraction = {
