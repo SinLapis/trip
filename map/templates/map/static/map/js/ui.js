@@ -37,7 +37,8 @@ $("#detailDismiss").on("click", function () {
     $detailImage.removeClass("slide");
 });
 //菜单选项
-$("#days").slider({
+var $days = $("#days");
+$days.slider({
     formatter: function (value) {
         return value;
     }
@@ -68,83 +69,155 @@ $.getJSON("/map/top-tags/", {}, function (json) {
 });
 //路线生成及绘制
 var $infoBox = $("#infoBox"), $waiting = $("#waiting"), $result = $("#result");
+var days = $days.attr("data-slider-value");
+var $guys = $("#guys");
+var guys = $guys.val();
 //查找poi回调
+function titlesSortByIndex(a, b) {
+    return a.index - b.index;
+}
 function localSearchCallback(titles, json) {
+    var plan_results = [];
     var drivingOptions = {
         onSearchComplete: function (results) {
+            console.log(results);
             var plan = results.getPlan(0);
             var route = plan.getRoute(0);
             var pts = route.getPath();
+            var plan_result = {
+                'time': plan.getDuration(true),
+                'distance': plan.getDistance(true)
+            };
+            plan_results.push(plan_result);
             var polyline = new BMap.Polyline(pts);
             map.addOverlay(polyline);
         }
     };
+    var sort_titles = titles;
+    sort_titles.sort(titlesSortByIndex);
     var driving = new BMap.WalkingRoute(map, drivingOptions);
-    for (i = 1; i < titles.length; i++) {
-        console.log(titles[i - 1] + ' ' + titles[i]);
-        driving.search(titles[i - 1], titles[i]);
+    for (i = 1; i < sort_titles.length; i++) {
+        driving.search(sort_titles[i - 1].title, sort_titles[i].title);
+    }
+    var totalTime = 0;
+    var totalDistance = 0;
+    for (var i = 0; i < plan_results.length; i++){
+        var hour = parseInt(plan_results.time.slice(
+            0, plan_results.time.indexOf("小时")));
+        var minute = parseInt(plan_results.time.slice(
+            plan_results.time.indexOf("小时") + 2, plan_results.time.indexOf("分")));
+        minute = minute + hour * 60;
+        totalTime += minute;
+        totalDistance += parseFloat(plan_results.distance.slice(
+            0, plan_results.distance.indexOf("公里")));
+    }
+    totalTime = parseInt(totalTime / 6);
+    var cost = 0;
+    if(totalDistance > 15){
+        cost = 15 * 1.5 + totalTime * 0.3 + (totalDistance - 15) * 2.2;
+    } else {
+        cost = totalDistance * 1.5 + totalTime * 0.3;
+    }
+    if(cost < 9){
+        cost = 9;
+    }
+    cost += guys * 10 * sort_titles.length;
+    totalTime += sort_titles.length * 60;
+    totalTime = parseInt(totalTime / 60);
+    var routeString = '';
+    i = 0;
+    while(1){
+        console.log(sort_titles[i]);
+        routeString += sort_titles[i].name;
+        if(i < sort_titles.length - 1){
+            routeString += ' - ';
+            i++;
+        } else {
+            break;
+        }
     }
     $infoBox.css("height", "150px");
     $infoBox.one("transitionend", function () {
         $waiting.css("display", "none");
         $result.css("display", "block");
-        $("#rtime").html(json.rtime);
-        $("#rcost").html(json.rcost);
+        $("#rRoute").html(routeString);
+        $("#rTime").html(totalTime + '小时');
+        $("#rCost").html(cost + '元');
     });
 }
 //信息框展示标志
 var infoBoxOn = false;
 function drawRoute(pack) {
-    var days = $("#days").attr("data-slider-value");
-    var guys = $("#guys").val();
+
     if (!guys)
         guys = 1;
     $.getJSON("/map/generate/", {
-        "days": days,
-        "guys": guys,
-        "natural-type": $("#naturalOption").is(":checked"),
-        "cultural-type": $("#culturalOption").is(":checked"),
-        "historical-type": $("#historicalOption").is(":checked"),
-        "points": pack
-    }, function (json) {
-        //处理后端回应
-        //信息框展示
-        infoBoxOn = true;
-        clearMap();
-        console.log(json.route);
-        //绘制折线、图标
-        var points = [];
-        for (i = 0; i < json.route.length; i++) {
-            if (json.route[i].lng && json.route[i].lat) {
-                var attractionOverlay = new AttractionOverlay(
-                    new BMap.Point(json.route[i].lng, json.route[i].lat),
-                    json.route[i].name, json.route[i].img
-                );
-                attractionOverlayArray.push(attractionOverlay);
-                map.addOverlay(attractionOverlay);
-            }
-            points.push(new BMap.Point(json.route[i].lng, json.route[i].lat));
-        }
-        // var polyline = new BMap.Polyline(points);
-        // map.addOverlay(polyline);
-        var titles = [];
-        var searchOption = {
-            onSearchComplete: function (results) {
-                if (results.getPoi(0))
-                    titles.push(results.getPoi(0).title);
-                else {
-                    var index = titles.length;
-                    points.splice(index, 1);
+            "days": days,
+            "guys": guys,
+            "natural-type": $("#naturalOption").is(":checked"),
+            "cultural-type": $("#culturalOption").is(":checked"),
+            "historical-type": $("#historicalOption").is(":checked"),
+            "points": pack
+        }, function (json) {
+            //处理后端回应
+            //信息框展示
+            infoBoxOn = true;
+            clearMap();
+            //绘制折线、图标
+            var points = [];
+            for (i = 0; i < json.route.length; i++) {
+                for (var j = 0; j < json.route.length; j++) {
+                    if (json.route[j].index === i) {
+                        if (json.route[j].lng && json.route[j].lat) {
+                            var attractionOverlay = new AttractionOverlay(
+                                new BMap.Point(json.route[j].lng, json.route[j].lat),
+                                json.route[j].name, json.route[j].img
+                            );
+                            attractionOverlayArray.push(attractionOverlay);
+                            map.addOverlay(attractionOverlay);
+                            points.push(new BMap.Point(json.route[j].lng,
+                                json.route[j].lat));
+                            break;
+                        }
+                    }
                 }
-                if (titles.length === points.length)
-                    localSearchCallback(titles, json);
             }
-        };
-        var localSearch = new BMap.LocalSearch(map, searchOption);
-        for (i = 0; i < points.length; i++) {
-            localSearch.search(json.route[i].name);
+            // var polyline = new BMap.Polyline(points);
+            // map.addOverlay(polyline);
+            var titles = [];
+            var searchOption = {
+                onSearchComplete: function (results) {
+                    var title;
+                    if (results.getPoi(0)) {
+                        var titleIndex;
+                        for (var i = 0; i < json.route.length; i++) {
+                            if (json.route[i].name === results.keyword) {
+                                titleIndex = json.route[i].index;
+                                break;
+                            }
+                        }
+                        title = {
+                            'title': results.getPoi(0).title,
+                            'name': json.route[i].name,
+                            'index': titleIndex
+                        };
+                        titles.push(title);
+                    }
+                    else {
+                        var index = titles.length;
+                        points.splice(index, 1);
+                    }
+                    if (titles.length === points.length) {
+                        localSearchCallback(titles, json);
+                    }
+                }
+            };
+            var localSearch = new BMap.LocalSearch(map, searchOption);
+            for (i = 0; i < json.route.length; i++) {
+                localSearch.search(json.route[i].name);
+            }
         }
-    });
+    );
 }
 //菜单路线部分初始化
 var $routePanel = $("#routePanel");

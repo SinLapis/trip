@@ -4,8 +4,8 @@ from django.contrib.gis.geos import Point
 from .models import Attraction, Tag, Tag_Map, Tag_Class_Map
 from math import sqrt
 
-INSIDE_CIRCLE = 0.0088960
-OUTSIDE_CIRCLE = 0.0133439
+INSIDE_CIRCLE = 0.004448
+OUTSIDE_CIRCLE = 0.0066720
 
 tag_count = {}
 
@@ -37,7 +37,6 @@ def get_distance_matrix(recommends):
             )
             distance_list.append(distance)
         distance_matrix.append(distance_list)
-    print(distance_matrix)
     return distance_matrix
 
 
@@ -130,20 +129,28 @@ def offset_match(points, tag_classes):
 
     return recommends
 
-def greedy_algorithm_one(recommends, distance_matrix, start_index):
+
+def greedy_algorithm(recommends, distance_matrix):
+    left = [x['attraction'].point.x for x in recommends]
+    start_index = left.index(max(left))
+
     plan = [start_index]
-    while len(plan) < len(recommends):
+    while len(plan) < len(distance_matrix):
         min_distance = 10
-        min_index = len(recommends)
-        for i in range(0, distance_matrix[plan[-1]]):
-            if i not in plan and distance_matrix[plan[-1]][i] < min_distance:
+        min_index = len(distance_matrix)
+        print(distance_matrix[plan[-1]])
+        print(plan[-1])
+        print([x['attraction'].name for x in recommends])
+        for i in range(0, len(distance_matrix[plan[-1]])):
+            if i not in plan and distance_matrix != 0 \
+                    and distance_matrix[plan[-1]][i] < min_distance:
                 min_distance = distance_matrix[plan[-1]][i]
                 min_index = i
         plan.append(min_index)
-    return plan
 
-
-def greedy_algorithm_all(recommends, distance_matrix):
-    plans = []
-
-
+    min_distance_recommends = []
+    print(plan)
+    for i in plan:
+        min_distance_recommends.append(recommends[i])
+    print([x['attraction'].name for x in min_distance_recommends])
+    return min_distance_recommends

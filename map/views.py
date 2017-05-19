@@ -54,9 +54,10 @@ def generate_route(request):
     if len(recommends) > days * 3:
         recommends = algorithm.score_delete_recommends(recommends, days)
     distance_matrix = algorithm.get_distance_matrix(recommends)
+    recommends = algorithm.greedy_algorithm(recommends, distance_matrix)
     recommends_json = []
     deduplicate = []
-    for recommend in recommends:
+    for index, recommend in enumerate(recommends):
         if recommend['attraction'].name not in deduplicate:
             img = Picture.objects.filter(attraction_id=recommend['attraction'].id)[0].pic_path
             recommend_content = {
@@ -64,12 +65,11 @@ def generate_route(request):
                 'lat': recommend['attraction'].point.x,
                 'lng': recommend['attraction'].point.y,
                 'img': img,
+                'index': index,
             }
             deduplicate.append(recommend['attraction'].name)
             recommends_json.append(recommend_content)
     json = {
-        'rtime': '3:00',
-        'rcost': '$50',
         'route': recommends_json,
     }
     return JsonResponse(json)
