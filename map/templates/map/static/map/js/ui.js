@@ -69,9 +69,8 @@ $.getJSON("/map/top-tags/", {}, function (json) {
 });
 //路线生成及绘制
 var $infoBox = $("#infoBox"), $waiting = $("#waiting"), $result = $("#result");
-var days = $days.attr("data-slider-value");
 var $guys = $("#guys");
-var guys = $guys.val();
+var guys = 1;
 //查找poi回调
 function titlesSortByIndex(a, b) {
     return a.index - b.index;
@@ -148,8 +147,9 @@ function localSearchCallback(titles, json) {
 //信息框展示标志
 var infoBoxOn = false;
 function drawRoute(pack) {
-
-    if (!guys)
+    var guys = $guys.val();
+    var days = $days.val();
+    if(!guys)
         guys = 1;
     $.getJSON("/map/generate/", {
             "days": days,

@@ -118,7 +118,10 @@ def offset_match(points, tag_classes):
 
     most_theme = max(tag_count, key=tag_count.get)
     sorted(recommends, key=itemgetter('rank'))
-    mid_rank = recommends[int((len(recommends) / 2))]['rank']
+    try:
+        mid_rank = recommends[int((len(recommends) / 2))]['rank']
+    except IndexError:
+        mid_rank = 0
     for i in range(len(recommends)):
         if recommends[i]['tag'].tag_name == most_theme:
             recommends[i]['fit-most-theme'] = True
@@ -132,7 +135,10 @@ def offset_match(points, tag_classes):
 
 def greedy_algorithm(recommends, distance_matrix):
     left = [x['attraction'].point.x for x in recommends]
-    start_index = left.index(max(left))
+    try:
+        start_index = left.index(max(left))
+    except ValueError:
+        start_index = 0
 
     plan = [start_index]
     while len(plan) < len(distance_matrix):
@@ -150,7 +156,10 @@ def greedy_algorithm(recommends, distance_matrix):
 
     min_distance_recommends = []
     print(plan)
-    for i in plan:
-        min_distance_recommends.append(recommends[i])
+    try:
+        for i in plan:
+            min_distance_recommends.append(recommends[i])
+    except IndexError:
+        pass
     print([x['attraction'].name for x in min_distance_recommends])
     return min_distance_recommends
